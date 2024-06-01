@@ -9,17 +9,19 @@ from colorama import init, Fore
 from openai import *
 from speech_recognition import *
 import time
-from tqdm import tqdm
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import telebot
+import os
 
 init() #инициализация colorama
 client = OpenAI(api_key=(API_KEY)) #инициализация GPT
 # sr.pause_treshold = 1
 bot = telebot.TeleBot(token)
 
+def shut_down():
+    os.system("shutdown /p")
 
 def listen_command():
     # query = input('-> ').lower()
@@ -161,6 +163,21 @@ def set_volume(volume_level):
     # Установить громкость (значение от 0.0 до 1.0)
     volume.SetMasterVolumeLevelScalar(volume_level, None)
 
+def volume_get():
+    print('На сколько процентов изменить громкость звука?')
+    volume = listen_command()
+    for element in volume:
+        try:
+            if isinstance(int(element), int):
+                volume = element
+                volume = int(volume)
+                if volume != 0:
+                    set_volume(volume/10)# -> Говорить значения от 0 до 9
+                else:
+                    set_volume(0)
+                print(f'Уровень громкости успешно изменён на {volume}%')
+        except ValueError:
+            pass
 
 def main():
 
@@ -194,18 +211,9 @@ def main():
         print('Пятница: Досвидания! До новых встреч')
 
     elif query in ['изменить громкость', 'громкость']:
-        print('На сколько процентов изменить громкость звука?')
-
-        volume = listen_command()
-        for element in volume:
-            try:
-                if isinstance(int(element), int):
-                    volume = element
-                    volume = int(volume)
-                    set_volume(volume/100)
-                    print(f'Уровень громкости успешно изменён на {volume}%')
-            except ValueError:
-                pass
+        volume_get()
+    elif query in ['выключи пк', 'выключи', 'выключи мой пк']:
+        shut_down()
 
     else:
         response = gpt(query)
