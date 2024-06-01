@@ -20,6 +20,10 @@ client = OpenAI(api_key=(API_KEY)) #инициализация GPT
 # sr.pause_treshold = 1
 bot = telebot.TeleBot(token)
 
+def handle_permission_denied_error(e):
+    print('OpenAi не поддерживается в вашей стране или регионе')
+
+
 def shut_down():
     os.system("shutdown /p")
 
@@ -141,18 +145,23 @@ def del_meta():
         showerror(title="Ошибка", message=f"Возникла ошибка!: {str(Error)}")
 
 def gpt(prompt):
-        response = client.chat.completions.create(
-            model='gpt-3.5-turbo',
-            messages=[{'role':'user','content':prompt}]
-        )
-        print('Вы бы хотели сохранить ответ в телеграмм боте?')
-        ans = listen_command()
-        if ans in ['да', 'ye', 'yes', 'yep']:
-            bot.send_message(chat_id=ID,text=f'GPT-save: {response.choices[0].message.content.strip()}')
-            return response.choices[0].message.content.strip()
-        else:
-            print(")=")
-            return response.choices[0].message.content.strip()
+        
+        try:
+            response = client.chat.completions.create(
+                model='gpt-3.5-turbo',
+                messages=[{'role':'user','content':prompt}]
+            )
+            print('Вы бы хотели сохранить ответ в телеграмм боте?')
+            ans = listen_command()
+            if ans in ['да', 'ye', 'yes', 'yep']:
+                bot.send_message(chat_id=ID,text=f'GPT-save: {response.choices[0].message.content.strip()}')
+                return response.choices[0].message.content.strip()
+            elif ans != ['да', 'ye', 'yes', 'yep']:
+                print(")=")
+                return response.choices[0].message.content.strip()
+        except PermissionDeniedError as e:
+            handle_permission_denied_error(e)
+
 
 def set_volume(volume_level):
     devices = AudioUtilities.GetSpeakers()
